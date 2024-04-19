@@ -1,9 +1,29 @@
 plugins {
     id 'java'
+    id 'io.qameta.allure' version '2.11.2'
+    id "io.freefair.lombok" version "6.0.0-m2"
 }
 
 group = 'com.anaSense'
 version = '1.0'
+
+def restAssuredVersion = "5.3.1",
+    allureVersion = "2.26.0"
+
+allure {
+    report {
+        version.set(allureVersion)
+    }
+    adapter {
+        aspectjWeaver.set(true)
+        aspectjVersion.set("1.9.22")
+        frameworks {
+            junit5 {
+                adapterVersion.set(allureVersion)
+            }
+        }
+    }
+}
 
 repositories {
     mavenCentral()
@@ -11,11 +31,13 @@ repositories {
 
 dependencies {
     testImplementation(
+            "io.rest-assured:rest-assured:$restAssuredVersion",
+            "io.rest-assured:json-schema-validator:$restAssuredVersion",
+            "io.qameta.allure:allure-rest-assured:$allureVersion",
             'org.junit.jupiter:junit-jupiter:5.8.1',
-            'io.rest-assured:rest-assured:5.4.0',
-            'io.rest-assured:json-schema-validator:5.4.0',
             'org.slf4j:slf4j-simple:2.0.13',
-            'com.jayway.jsonpath:json-path:2.9.0'
+            'com.jayway.jsonpath:json-path:2.9.0',
+            'org.assertj:assertj-core:3.25.3',
     )
 }
 

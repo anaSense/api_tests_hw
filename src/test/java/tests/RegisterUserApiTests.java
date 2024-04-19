@@ -1,133 +1,129 @@
 package tests;
 
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
+import models.RegistrationBodyModel;
+import models.RegistrationErrorResponseModel;
+import models.RegistrationResponseModel;
 import org.junit.jupiter.api.Test;
 
+import static io.qameta.allure.Allure.step;
 import static io.restassured.RestAssured.given;
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
+import static specs.RegistrationSpec.*;
 
 
-public class RegisterUserApiTests {
+public class RegisterUserApiTests extends TestBase {
 
     @Test
     void successfullyRegistrationTest() {
-        String body = "{ \"email\": \"eve.holt@reqres.in\", \"password\": \"pistol\" }";
-        Response statusResponse = given()
-                .log().uri()
-                .log().method()
-                .log().body()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("https://reqres.in/api/register")
-                .then()
-                .log().status()
-                .log().body()
-                .statusCode(200)
-                .extract().response();
+        RegistrationBodyModel bodyModel = new RegistrationBodyModel();
+        bodyModel.setEmail("eve.holt@reqres.in");
+        bodyModel.setPassword("pistol");
 
-        assertThat(statusResponse.path("token"), is("QpwL5tke4Pnpja7X4"));
-        assertThat(statusResponse.path("id"), is(4));
+        RegistrationResponseModel response = step("Make request ", () ->
+            given(registrationRequestSpec)
+                    .body(bodyModel)
+                    .when()
+                    .post()
+                    .then()
+                    .spec(registrationResponseSpec)
+                    .extract().as(RegistrationResponseModel.class));
+
+        step("Check response", () -> {
+            assertThat(response.getToken()).isEqualTo("QpwL5tke4Pnpja7X4");
+            assertThat(response.getId()).isEqualTo(4);
+        });
     }
 
     @Test
     void checkSuccessRegistrationSchemaTest() {
-        String body = "{ \"email\": \"eve.holt@reqres.in\", \"password\": \"pistol\" }";
-        given()
-                .log().uri()
-                .log().method()
-                .log().body()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("https://reqres.in/api/register")
-                .then()
-                .log().status()
-                .log().body()
-                .statusCode(200)
-                .body(matchesJsonSchemaInClasspath("schemas/success_register_schema.json"));
+        RegistrationBodyModel bodyModel = new RegistrationBodyModel();
+        bodyModel.setEmail("eve.holt@reqres.in");
+        bodyModel.setPassword("pistol");
+
+        step("Check schema of request", () ->
+                given(registrationRequestSpec)
+                        .body(bodyModel)
+                        .when()
+                        .post()
+                        .then()
+                        .spec(registrationResponseSpec)
+                        .body(matchesJsonSchemaInClasspath(
+                                "schemas/success_register_schema.json")));
     }
 
     @Test
     void failedRegistrationWithoutPasswordTest() {
-        String body = "{ \"email\": \"eve.holt@reqres.in\" }";
-        Response statusResponse = given()
-                .log().uri()
-                .log().method()
-                .log().body()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("https://reqres.in/api/register")
-                .then()
-                .log().status()
-                .log().body()
-                .statusCode(400)
-                .extract().response();
+        RegistrationBodyModel bodyModel = new RegistrationBodyModel();
+        bodyModel.setEmail("eve.holt@reqres.in");
 
-        assertThat(statusResponse.path("error"), is("Missing password"));
+        RegistrationErrorResponseModel response = step("Make request ", () ->
+                given(registrationRequestSpec)
+                        .body(bodyModel)
+                        .when()
+                        .post()
+                        .then()
+                        .spec(registrationResponseWithErrorSpec)
+                        .extract().as(RegistrationErrorResponseModel.class));
+
+        step("Check error in response", () -> {
+            assertThat(response.getError()).isEqualTo("Missing password");
+        });
     }
 
     @Test
     void failedRegistrationWithoutEmailTest() {
-        String body = "{ \"password\": \"pistol\" }";
-        Response statusResponse = given()
-                .log().uri()
-                .log().method()
-                .log().body()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("https://reqres.in/api/register")
-                .then()
-                .log().status()
-                .log().body()
-                .statusCode(400)
-                .extract().response();
+        RegistrationBodyModel bodyModel = new RegistrationBodyModel();
+        bodyModel.setPassword("pistol");
 
-        assertThat(statusResponse.path("error"), is("Missing email or username"));
+        RegistrationErrorResponseModel response = step("Make request ", () ->
+                given(registrationRequestSpec)
+                        .body(bodyModel)
+                        .when()
+                        .post()
+                        .then()
+                        .spec(registrationResponseWithErrorSpec)
+                        .extract().as(RegistrationErrorResponseModel.class));
+
+        step("Check error in response", () -> {
+            assertThat(response.getError()).isEqualTo("Missing email or username");
+        });
     }
 
     @Test
     void failedRegistrationWithInvalidEmailTest() {
-        String body = "{ \"email\": \"eve.holtreqres.in\", \"password\": \"pistol\" }";
-        Response statusResponse = given()
-                .log().uri()
-                .log().method()
-                .log().body()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("https://reqres.in/api/register")
-                .then()
-                .log().status()
-                .log().body()
-                .statusCode(400)
-                .extract().response();
+        RegistrationBodyModel bodyModel = new RegistrationBodyModel();
+        bodyModel.setEmail("eve.holtreqres.in");
+        bodyModel.setPassword("pistol");
 
-        assertThat(statusResponse.path("error"), is("Note: Only defined users succeed registration"));
+        RegistrationErrorResponseModel response = step("Make request ", () ->
+                given(registrationRequestSpec)
+                        .body(bodyModel)
+                        .when()
+                        .post()
+                        .then()
+                        .spec(registrationResponseWithErrorSpec)
+                        .extract().as(RegistrationErrorResponseModel.class));
+
+        step("Check error in response", () -> {
+            assertThat(response.getError()).isEqualTo("Note: Only defined users succeed registration");
+        });
     }
 
     @Test
     void failedRegistrationWithEmptyBodyTest() {
         String body = "{}";
-        Response statusResponse = given()
-                .log().uri()
-                .log().method()
-                .log().body()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("https://reqres.in/api/register")
-                .then()
-                .log().status()
-                .log().body()
-                .statusCode(400)
-                .extract().response();
+        RegistrationErrorResponseModel response = step("Make request ", () ->
+                given(registrationRequestSpec)
+                        .body(body)
+                        .when()
+                        .post()
+                        .then()
+                        .spec(registrationResponseWithErrorSpec)
+                        .extract().as(RegistrationErrorResponseModel.class));
 
-        assertThat(statusResponse.path("error"), is("Missing email or username"));
+        step("Check error in response", () -> {
+            assertThat(response.getError()).isEqualTo("Missing email or username");
+        });
     }
 }
