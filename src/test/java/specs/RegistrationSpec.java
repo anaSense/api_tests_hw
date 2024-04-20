@@ -1,7 +1,6 @@
 package specs;
 
 import io.restassured.builder.ResponseSpecBuilder;
-import io.restassured.filter.Filter;
 import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
@@ -18,9 +17,7 @@ public class RegistrationSpec {
             .log().method()
             .log().body()
             .log().headers()
-            .contentType(ContentType.JSON)
-            .basePath("api/register");
-
+            .contentType(ContentType.JSON);
     public static ResponseSpecification registrationResponseSpec = new ResponseSpecBuilder()
             .expectStatusCode(200)
             .log(LogDetail.STATUS)
